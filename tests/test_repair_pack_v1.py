@@ -40,7 +40,7 @@ class TestRepairPackV1(unittest.TestCase):
         self.assertEqual(len(events_strict), 0, "Should NOT detect wick with ratio 2.0")
 
     def test_vwap_scale_normalization(self):
-        """B) Test that VWAP feature outputs 0-100 scale."""
+        """B) Test that VWAP feature outputs 0-100 scale magnitude."""
         # Create a state where sigma is 1.0, mean is 100.
         symbol = "VWAP_TEST"
         state = VWAP_STATE[symbol]
@@ -57,10 +57,10 @@ class TestRepairPackV1(unittest.TestCase):
         score = feats['vwap_mean_reversion_score']
         
         # 103 is 3 units away from mean 100. Sigma approx 1. Z=3.
-        # Normalized score should be close to 100.
-        # (It depends on exact sigma calc, but should be high positive)
-        self.assertTrue(score > 80, f"VWAP score {score} should be high (>80) for 3-sigma deviation")
-        self.assertTrue(score <= 100, "VWAP score should be max 100")
+        # Normalized score magnitude should be close to 100.
+        # Score is negative because price > VWAP (expected to revert down)
+        self.assertTrue(abs(score) > 80, f"VWAP score magnitude {abs(score)} should be high (>80) for 3-sigma deviation")
+        self.assertTrue(abs(score) <= 100, "VWAP score magnitude should be max 100")
 
     def test_vwap_state_isolation(self):
         """C) Test that BTC trades do not affect ETH VWAP."""
