@@ -6,7 +6,7 @@ import os
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from features import WickEvent
 
@@ -21,7 +21,7 @@ class StorageError(Exception):
 class JsonlWriter:
     """
     JSONL event writer with atomic writes and proper error handling.
-    
+
     Features:
     - Atomic writes using temp file + rename
     - File rotation based on size
@@ -29,7 +29,7 @@ class JsonlWriter:
     - Corruption detection via write verification
     """
 
-    def __init__(self, output_dir: str, file_rotation_mb: int = 100):
+    def __init__(self, output_dir: Union[str, Path], file_rotation_mb: int = 100):
         self.output_dir = Path(output_dir)
         self.file_rotation_mb = file_rotation_mb
         self.current_file: Optional[Path] = None

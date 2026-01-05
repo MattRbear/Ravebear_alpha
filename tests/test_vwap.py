@@ -39,15 +39,15 @@ def test_reversion_score():
         Trade(datetime.now(), "BTC", 110.0, 1.0, "buy")
     ]
     vwap.compute_vwap_features(trades, datetime.now(), "BTC", "sess", 110.0)
-    
+
     # Price=120. Z = (120-100)/10 = 2.0.
     # Score magnitude = 2.0/3.0 * 100 = 66.67
     # Price > VWAP so score is negative (mean reversion would push down)
     res = vwap.compute_vwap_features([], datetime.now(), "BTC", "sess", 120.0)
-    assert -70 < res["vwap_mean_reversion_score"] < -60, f"Expected score around -66.7, got {res['vwap_mean_reversion_score']}"
-    
+    assert res["vwap_mean_reversion_score"] == pytest.approx(-66.67, abs=1.0)
+
     # Price=80. Z = (80-100)/10 = -2.0.
     # Score magnitude = 2.0/3.0 * 100 = 66.67
     # Price < VWAP so score is positive (mean reversion would push up)
     res2 = vwap.compute_vwap_features([], datetime.now(), "BTC", "sess", 80.0)
-    assert 60 < res2["vwap_mean_reversion_score"] < 70, f"Expected score around 66.7, got {res2['vwap_mean_reversion_score']}"
+    assert res2["vwap_mean_reversion_score"] == pytest.approx(66.67, abs=1.0)
