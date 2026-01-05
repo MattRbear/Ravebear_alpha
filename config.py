@@ -6,7 +6,6 @@ Loads and validates configuration settings for the Wick Engine.
 """
 
 import os
-from pathlib import Path
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
@@ -88,27 +87,27 @@ def load_settings() -> Settings:
     # Build OKX settings
     okx = OkxSettings(
         base_url_ws_public=os.getenv(
-            "OKX_WS_URL", 
+            "OKX_WS_URL",
             "wss://ws.okx.com:8443/ws/v5/public"
         ),
         symbols=os.getenv("OKX_SYMBOLS", "BTC-USDT,ETH-USDT,SOL-USDT").split(","),
     )
-    
+
     # Build Coinalyze settings
     coinalyze = CoinalyzeSettings(
         api_key=os.getenv("COINALYZE_API_KEY", ""),
     )
-    
+
     # Build CoinGecko settings (optional)
     coingecko_key = os.getenv("COINGECKO_API_KEY", "")
     coingecko = CoinGeckoSettings(api_key=coingecko_key) if coingecko_key else None
-    
+
     # Build Discord settings (optional)
     discord_general = os.getenv("DISCORD_WEBHOOK_GENERAL", "")
     discord_btc = os.getenv("DISCORD_WEBHOOK_BTC", "")
     discord_eth = os.getenv("DISCORD_WEBHOOK_ETH", "")
     discord_sol = os.getenv("DISCORD_WEBHOOK_SOL", "")
-    
+
     discord = None
     if discord_general or discord_btc or discord_eth or discord_sol:
         discord = DiscordSettings(
@@ -117,19 +116,19 @@ def load_settings() -> Settings:
             webhook_eth=discord_eth,
             webhook_sol=discord_sol,
         )
-    
+
     # Build Engine settings
     engine = EngineSettings(
         candle_timeframe_secs=int(os.getenv("CANDLE_TIMEFRAME", "60")),
         wick_min_ratio=float(os.getenv("WICK_MIN_RATIO", "1.5")),
     )
-    
+
     # Build Storage settings
     storage = StorageSettings(
         output_dir=os.getenv("OUTPUT_DIR", "data"),
         file_rotation_mb=int(os.getenv("FILE_ROTATION_MB", "100")),
     )
-    
+
     return Settings(
         okx=okx,
         coinalyze=coinalyze,
