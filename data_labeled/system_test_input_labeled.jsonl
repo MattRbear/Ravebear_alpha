@@ -1,0 +1,2 @@
+{"ts": "2025-12-27T13:43:12.311265+00:00", "symbol": "BTC-USDT", "timeframe": "1m", "wick_side": "upper", "wick_high": 95000.0, "wick_low": 94000.0, "features": {"wick_size_pct": 0.005}}
+{"ts": "2025-12-28T08:43:12.311265+00:00", "symbol": "ETH-USDT", "timeframe": "1m", "wick_side": "lower", "wick_high": 3500.0, "wick_low": 3400.0, "features": {"wick_size_pct": 0.005}}

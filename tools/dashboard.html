@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALPHA Engine Dashboard</title>
+    <style>
+        body { font-family: monospace; background: #111; color: #eee; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .card { background: #222; padding: 15px; border-radius: 5px; border: 1px solid #333; }
+        .value { font-size: 24px; font-weight: bold; color: #0f0; }
+        .label { font-size: 14px; color: #aaa; }
+        .status-ok { color: #0f0; }
+        .status-warn { color: #ff0; }
+        .status-err { color: #f00; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td { padding: 5px; border-bottom: 1px solid #333; }
+    </style>
+</head>
+<body>
+    <h1>ALPHA Wick Engine</h1>
+    <div id="last-update" style="color: #666; margin-bottom: 20px;">Loading...</div>
+
+    <div class="grid">
+        <div class="card">
+            <div class="label">Status</div>
+            <div id="status-val" class="value">--</div>
+        </div>
+        <div class="card">
+            <div class="label">Wicks Detected</div>
+            <div id="wicks-val" class="value">0</div>
+        </div>
+        <div class="card">
+            <div class="label">Alerts Sent</div>
+            <div id="alerts-val" class="value">0</div>
+        </div>
+        <div class="card">
+            <div class="label">USDT.D</div>
+            <div id="usdtd-val" class="value">0.00%</div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+        <div class="label">Latest Candles</div>
+        <table id="candle-table"></table>
+    </div>
+
+    <script>
+        async def update() {
+            try {
+                const res = await fetch('/data/engine_status.json');
+                const data = await res.json();
+                
+                document.getElementById('last-update').innerText = 'Last Update: ' + data.timestamp;
+                
+                const statusEl = document.getElementById('status-val');
+                statusEl.innerText = data.running ? 'RUNNING' : 'STOPPED';
+                statusEl.className = 'value ' + (data.running ? 'status-ok' : 'status-err');
+                
+                document.getElementById('wicks-val').innerText = data.wicks_detected;
+                document.getElementById('alerts-val').innerText = data.alerts_sent;
+                document.getElementById('usdtd-val').innerText = data.usdt_dominance.toFixed(2) + '%';
+                
+                const table = document.getElementById('candle-table');
+                table.innerHTML = '';
+                for (const [sym, ts] of Object.entries(data.latest_candles)) {
+                    const row = table.insertRow();
+                    row.insertCell().innerText = sym;
+                    const date = new Date(ts);
+                    row.insertCell().innerText = date.toLocaleTimeString();
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById('last-update').innerText = 'Connection Error';
+            }
+        }
+        
+        setInterval(update, 1000);
+        update();
+    </script>
+</body>
+</html>

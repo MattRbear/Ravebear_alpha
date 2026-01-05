@@ -1,0 +1,367 @@
+{
+    "features": {
+        "wick_geometry": [
+            {
+                "name": "wick_size_pct",
+                "type": "float",
+                "description": "Size of the wick relative to the candle range."
+            },
+            {
+                "name": "body_size_pct",
+                "type": "float",
+                "description": "Size of the body relative to the candle range."
+            },
+            {
+                "name": "wick_to_body_ratio",
+                "type": "float",
+                "description": "Ratio of wick size to body size."
+            },
+            {
+                "name": "protrusion_pct",
+                "type": "float",
+                "description": "Percentage of the wick protruding from surrounding price action."
+            },
+            {
+                "name": "rejection_velocity",
+                "type": "float",
+                "description": "Speed of price rejection from the wick extreme."
+            },
+            {
+                "name": "displacement_idx",
+                "type": "float",
+                "description": "Measure of price displacement after the wick."
+            },
+            {
+                "name": "finished_auction",
+                "type": "bool",
+                "description": "Flag indicating if the auction at the level is considered finished."
+            },
+            {
+                "name": "unfinished_business",
+                "type": "bool",
+                "description": "Flag indicating unfinished business at the level."
+            },
+            {
+                "name": "zero_print_flag",
+                "type": "bool",
+                "description": "Flag for zero print occurrences."
+            },
+            {
+                "name": "imbalance_trap_score",
+                "type": "float",
+                "description": "Score indicating probability of trapped traders."
+            }
+        ],
+        "order_flow": [
+            {
+                "name": "delta_at_wick",
+                "type": "float",
+                "description": "Net delta execution at the wick price levels."
+            },
+            {
+                "name": "delta_prev_pivot",
+                "type": "float",
+                "description": "Delta at the previous pivot point."
+            },
+            {
+                "name": "delta_divergence_flag",
+                "type": "bool",
+                "description": "True if delta diverges from price action."
+            },
+            {
+                "name": "cvd_slope_10",
+                "type": "float",
+                "description": "Slope of CVD over the last 10 candles."
+            },
+            {
+                "name": "absorption_flag",
+                "type": "bool",
+                "description": "True if absorption is detected."
+            },
+            {
+                "name": "exhaustion_flag",
+                "type": "bool",
+                "description": "True if exhaustion is detected."
+            },
+            {
+                "name": "trade_frequency_spike",
+                "type": "float",
+                "description": "Z-score of trade frequency."
+            },
+            {
+                "name": "bid_ask_refresh_rate",
+                "type": "float",
+                "description": "Rate of limit order refreshes."
+            },
+            {
+                "name": "iceberg_flag",
+                "type": "bool",
+                "description": "True if iceberg orders are detected."
+            }
+        ],
+        "liquidity": [
+            {
+                "name": "spread",
+                "type": "float",
+                "description": "Bid-ask spread."
+            },
+            {
+                "name": "l1_depth_bid",
+                "type": "float",
+                "description": "Volume at best bid."
+            },
+            {
+                "name": "l1_depth_ask",
+                "type": "float",
+                "description": "Volume at best ask."
+            },
+            {
+                "name": "l5_depth_bid",
+                "type": "float",
+                "description": "Cumulative volume top 5 bids."
+            },
+            {
+                "name": "l5_depth_ask",
+                "type": "float",
+                "description": "Cumulative volume top 5 asks."
+            },
+            {
+                "name": "depth_imbalance",
+                "type": "float",
+                "description": "Imbalance between bid and ask depth."
+            },
+            {
+                "name": "liquidity_void_flag",
+                "type": "bool",
+                "description": "True if a liquidity void is detected."
+            },
+            {
+                "name": "stacked_imbalance_nearby",
+                "type": "bool",
+                "description": "True if stacked imbalances are near."
+            }
+        ],
+        "derivatives": [
+            {
+                "name": "oi_change_pct",
+                "type": "float",
+                "description": "Percentage change in Open Interest."
+            },
+            {
+                "name": "oi_direction",
+                "type": "string",
+                "description": "Direction of OI change (inc/dec)."
+            },
+            {
+                "name": "oi_liquidation_flag",
+                "type": "bool",
+                "description": "True if OI change aligns with liquidations."
+            },
+            {
+                "name": "liquidation_density",
+                "type": "float",
+                "description": "Density of liquidations in the area."
+            },
+            {
+                "name": "funding_rate_now",
+                "type": "float",
+                "description": "Current funding rate."
+            },
+            {
+                "name": "funding_rate_next",
+                "type": "float",
+                "description": "Predicted next funding rate."
+            },
+            {
+                "name": "funding_distance_to_timestamp",
+                "type": "float",
+                "description": "Time until funding payment."
+            }
+        ],
+        "vwap": [
+            {
+                "name": "session_vwap_distance",
+                "type": "float",
+                "description": "Distance to Session VWAP."
+            },
+            {
+                "name": "global_vwap_distance",
+                "type": "float",
+                "description": "Distance to Global VWAP."
+            },
+            {
+                "name": "vwap_band_flag_1sd",
+                "type": "bool",
+                "description": "True if touching 1SD VWAP band."
+            },
+            {
+                "name": "vwap_band_flag_2sd",
+                "type": "bool",
+                "description": "True if touching 2SD VWAP band."
+            },
+            {
+                "name": "vwap_mean_reversion_score",
+                "type": "float",
+                "description": "Score indicating potential for mean reversion to VWAP."
+            }
+        ],
+        "regime": [
+            {
+                "name": "hurst_exponent",
+                "type": "float",
+                "description": "Hurst exponent for trendiness."
+            },
+            {
+                "name": "adx_14",
+                "type": "float",
+                "description": "ADX (14 period)."
+            },
+            {
+                "name": "atr_14",
+                "type": "float",
+                "description": "ATR (14 period)."
+            },
+            {
+                "name": "trend_strength",
+                "type": "float",
+                "description": "Composite trend strength score."
+            },
+            {
+                "name": "btc_d",
+                "type": "float",
+                "description": "Bitcoin Dominance."
+            },
+            {
+                "name": "usdt_d",
+                "type": "float",
+                "description": "USDT Dominance."
+            },
+            {
+                "name": "eth_btc_trend",
+                "type": "float",
+                "description": "Trend of ETH/BTC pair."
+            },
+            {
+                "name": "rolling_beta_btc_30",
+                "type": "float",
+                "description": "30-day rolling beta to BTC."
+            },
+            {
+                "name": "rolling_beta_btc_90",
+                "type": "float",
+                "description": "90-day rolling beta to BTC."
+            },
+            {
+                "name": "correlation_drift",
+                "type": "float",
+                "description": "Change in correlation structure."
+            }
+        ],
+        "session": [
+            {
+                "name": "session_label",
+                "type": "string",
+                "description": "Current trading session (asia/london/ny)."
+            },
+            {
+                "name": "minutes_into_session",
+                "type": "int",
+                "description": "Minutes elapsed in current session."
+            },
+            {
+                "name": "minutes_until_session_close",
+                "type": "int",
+                "description": "Minutes remaining in current session."
+            },
+            {
+                "name": "hour_of_day",
+                "type": "int",
+                "description": "Hour of the day (UTC)."
+            },
+            {
+                "name": "day_of_week",
+                "type": "int",
+                "description": "Day of the week (0=Mon, 6=Sun)."
+            },
+            {
+                "name": "weekend_flag",
+                "type": "bool",
+                "description": "True if it is the weekend."
+            },
+            {
+                "name": "cme_close_proximity",
+                "type": "float",
+                "description": "Proximity to CME close time."
+            }
+        ],
+        "market_profile": [
+            {
+                "name": "fresh_sd_zone_flag",
+                "type": "bool",
+                "description": "True if testing a fresh S&D zone."
+            },
+            {
+                "name": "sd_zone_penetration_pct",
+                "type": "float",
+                "description": "Percentage penetration into S&D zone."
+            },
+            {
+                "name": "poc_distance",
+                "type": "float",
+                "description": "Distance to Point of Control."
+            },
+            {
+                "name": "vah_distance",
+                "type": "float",
+                "description": "Distance to Value Area High."
+            },
+            {
+                "name": "val_distance",
+                "type": "float",
+                "description": "Distance to Value Area Low."
+            },
+            {
+                "name": "value_rejection_flag",
+                "type": "bool",
+                "description": "True if price is rejected from value area."
+            }
+        ],
+        "labels": [
+            {
+                "name": "untouched_30m",
+                "type": "bool",
+                "description": "True if level untouched for 30m."
+            },
+            {
+                "name": "untouched_1h",
+                "type": "bool",
+                "description": "True if level untouched for 1h."
+            },
+            {
+                "name": "untouched_4h",
+                "type": "bool",
+                "description": "True if level untouched for 4h."
+            },
+            {
+                "name": "hold_duration",
+                "type": "float",
+                "description": "Duration the level held."
+            },
+            {
+                "name": "mfe",
+                "type": "float",
+                "description": "Maximum Favorable Excursion."
+            },
+            {
+                "name": "mae",
+                "type": "float",
+                "description": "Maximum Adverse Excursion."
+            },
+            {
+                "name": "distance_moved",
+                "type": "float",
+                "description": "Total distance moved from wick."
+            }
+        ]
+    }
+}

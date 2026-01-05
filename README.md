@@ -1,2 +1,2 @@
-# shit
-do
+# ALPHA
+liquidity bot
