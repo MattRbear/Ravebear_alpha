@@ -1,0 +1,18 @@
+{
+  "description": "Sample OKX trade message for BTC-USDT",
+  "source": "OKX WebSocket trades channel",
+  "arg": {
+    "channel": "trades",
+    "instId": "BTC-USDT"
+  },
+  "data": [
+    {
+      "instId": "BTC-USDT",
+      "tradeId": "12345678901",
+      "px": "95000.5",
+      "sz": "0.01234",
+      "side": "buy",
+      "ts": "1704067200000"
+    }
+  ]
+}
