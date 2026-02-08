@@ -180,51 +180,56 @@ def load_recent_wicks(n: int = 100) -> List[WickData]:
     return wicks
 
 
-def process_wick(w: WickData):
+def process_wick(wick_data: WickData):
     """Compute all derived fields."""
-    f = w.features
+    wick_features = wick_data.features
     
-    w.wb_ratio = min(f.get('wick_to_body_ratio', 0), 999)
-    w.is_doji = w.wb_ratio >= 50 or f.get('body_size_pct', 1) < 0.05
+    wick_data.wb_ratio = min(wick_features.get('wick_to_body_ratio', 0), 999)
+    wick_data.is_doji = wick_data.wb_ratio >= 50 or wick_features.get('body_size_pct', 1) < 0.05
     
     # Missing flags
-    w.missing_flags = []
-    if f.get('l5_depth_bid', 0) == 0 and f.get('l5_depth_ask', 0) == 0:
-        w.missing_flags.append("NO_DEPTH")
-    if f.get('oi_change_pct') is None:
-        w.missing_flags.append("NO_OI")
-    if f.get('funding_rate_now') is None or f.get('funding_rate_now', 0) == 0:
-        w.missing_flags.append("NO_FUND")
+    wick_data.missing_flags = []
+    if wick_features.get('l5_depth_bid', 0) == 0 and wick_features.get('l5_depth_ask', 0) == 0:
+        wick_data.missing_flags.append("NO_DEPTH")
+    if wick_features.get('oi_change_pct') is None:
+        wick_data.missing_flags.append("NO_OI")
+    if wick_features.get('funding_rate_now') is None or wick_features.get('funding_rate_now', 0) == 0:
+        wick_data.missing_flags.append("NO_FUND")
     
     total_fields = 5
-    w.integrity = (total_fields - len(w.missing_flags)) / total_fields
+    wick_data.integrity = (total_fields - len(wick_data.missing_flags)) / total_fields
     
-    w.magnet_score = compute_magnet_score(w)
-    w.confidence = compute_confidence(w)
-    w.trap_mode = detect_trap_mode(w)
-    w.timing_class, w.attack_window = classify_timing(w)
+    wick_data.magnet_score = compute_magnet_score(wick_data)
+    wick_data.confidence = compute_confidence(wick_data)
+    wick_data.trap_mode = detect_trap_mode(wick_data)
+    wick_data.timing_class, wick_data.attack_window = classify_timing(wick_data)
     
-    void_bonus = 0.15 if f.get('liquidity_void_flag', False) else 0
-    stacked_bonus = 0.15 if f.get('stacked_imbalance_nearby', False) else 0
-    w.attention_score = w.magnet_score * (w.confidence / 100) * w.integrity * (1 + void_bonus + stacked_bonus)
+    void_bonus = 0.15 if wick_features.get('liquidity_void_flag', False) else 0
+    stacked_bonus = 0.15 if wick_features.get('stacked_imbalance_nearby', False) else 0
+    wick_data.attention_score = (
+        wick_data.magnet_score
+        * (wick_data.confidence / 100)
+        * wick_data.integrity
+        * (1 + void_bonus + stacked_bonus)
+    )
     
-    w.market_state, w.market_state_conf, w.market_state_evidence = detect_market_state(w)
+    wick_data.market_state, wick_data.market_state_conf, wick_data.market_state_evidence = detect_market_state(wick_data)
     
     # Process orderbook for void/wall detection
-    if w.orderbook:
+    if wick_data.orderbook:
         try:
-            ob = OrderbookSnapshot.from_dict(w.orderbook)
+            ob = OrderbookSnapshot.from_dict(wick_data.orderbook)
             result = void_detector.analyze(ob)
-            w.void_above = result['void_above']
-            w.void_below = result['void_below']
-            w.bid_walls = result['bid_walls']
-            w.ask_walls = result['ask_walls']
+            wick_data.void_above = result['void_above']
+            wick_data.void_below = result['void_below']
+            wick_data.bid_walls = result['bid_walls']
+            wick_data.ask_walls = result['ask_walls']
         except:
             pass
 
 
 def compute_magnet_score(w: WickData) -> float:
-    f = w.features
+    wick_features = w.features
     score = 0
     
     if w.wb_ratio >= 2:
@@ -232,28 +237,28 @@ def compute_magnet_score(w: WickData) -> float:
     elif w.wb_ratio >= 1:
         score += 8
     
-    vwap_score = f.get('vwap_mean_reversion_score', 0)
+    vwap_score = wick_features.get('vwap_mean_reversion_score', 0)
     if vwap_score >= 70:
         score += 20
     elif vwap_score >= 40:
         score += 10
     
-    depth_total = f.get('l5_depth_bid', 0) + f.get('l5_depth_ask', 0)
+    depth_total = wick_features.get('l5_depth_bid', 0) + wick_features.get('l5_depth_ask', 0)
     if depth_total > 0:
         score += min(15, depth_total / 10)
     
-    rej_vel = f.get('rejection_velocity', 0)
+    rej_vel = wick_features.get('rejection_velocity', 0)
     if rej_vel > 0.1:
         score += 15
     elif rej_vel > 0.05:
         score += 8
     
-    if f.get('liquidity_void_flag', False):
+    if wick_features.get('liquidity_void_flag', False):
         score += 10
-    if f.get('stacked_imbalance_nearby', False):
+    if wick_features.get('stacked_imbalance_nearby', False):
         score += 10
     
-    oi_change = abs(f.get('oi_change_pct', 0) * 100)
+    oi_change = abs(wick_features.get('oi_change_pct', 0) * 100)
     if oi_change > 0.05:
         score += 5
     
@@ -262,22 +267,22 @@ def compute_magnet_score(w: WickData) -> float:
 
 def compute_confidence(w: WickData) -> float:
     conf = 50
-    f = w.features
+    wick_features = w.features
     conf += w.integrity * 20
-    delta = abs(f.get('delta_at_wick', 0))
+    delta = abs(wick_features.get('delta_at_wick', 0))
     if delta > 50:
         conf += 15
     elif delta > 10:
         conf += 8
-    imbal = abs(f.get('depth_imbalance', 0))
+    imbal = abs(wick_features.get('depth_imbalance', 0))
     if imbal > 0.5:
         conf += 10
     return min(100, conf)
 
 
 def detect_trap_mode(w: WickData) -> str:
-    f = w.features
-    delta = f.get('delta_at_wick', 0)
+    wick_features = w.features
+    delta = wick_features.get('delta_at_wick', 0)
     
     if w.wb_ratio >= 3:
         if w.wick_side == 'lower' and delta < -20:
@@ -287,16 +292,16 @@ def detect_trap_mode(w: WickData) -> str:
         elif abs(delta) > 10:
             return "SOFT_TRAP"
     
-    if f.get('oi_liquidation_flag', False):
+    if wick_features.get('oi_liquidation_flag', False):
         return "LIQ_REVERSE"
     
     return "NO_TRAP"
 
 
 def classify_timing(w: WickData) -> Tuple[str, int]:
-    f = w.features
-    mins_left = f.get('minutes_until_session_close', 999)
-    mins_into = f.get('minutes_into_session', 0)
+    wick_features = w.features
+    mins_left = wick_features.get('minutes_until_session_close', 999)
+    mins_into = wick_features.get('minutes_into_session', 0)
     
     attack_window = 300
     
@@ -304,21 +309,21 @@ def classify_timing(w: WickData) -> Tuple[str, int]:
         return "SESS_END", mins_left * 60
     elif mins_into < 30:
         return "SESS_OPEN", 180
-    elif f.get('vwap_mean_reversion_score', 0) > 80:
+    elif wick_features.get('vwap_mean_reversion_score', 0) > 80:
         return "EXTENDED", 120
     
     return "NORMAL", attack_window
 
 
 def detect_market_state(w: WickData) -> Tuple[str, float, List[str]]:
-    f = w.features
+    wick_features = w.features
     
-    delta = f.get('delta_at_wick', 0)
-    rej_vel = f.get('rejection_velocity', 0)
-    depth_total = f.get('l5_depth_bid', 0) + f.get('l5_depth_ask', 0)
-    depth_imbal = f.get('depth_imbalance', 0)
-    void = f.get('liquidity_void_flag', False)
-    cvd_slope = f.get('cvd_slope_10', 0)
+    delta = wick_features.get('delta_at_wick', 0)
+    rej_vel = wick_features.get('rejection_velocity', 0)
+    depth_total = wick_features.get('l5_depth_bid', 0) + wick_features.get('l5_depth_ask', 0)
+    depth_imbal = wick_features.get('depth_imbalance', 0)
+    void = wick_features.get('liquidity_void_flag', False)
+    cvd_slope = wick_features.get('cvd_slope_10', 0)
     
     if abs(delta) > 30 and w.wb_ratio >= 1.5 and rej_vel < 0.05:
         conf = min(0.95, 0.5 + abs(delta) / 100)
@@ -327,7 +332,7 @@ def detect_market_state(w: WickData) -> Tuple[str, float, List[str]]:
     if depth_total < 5 and void:
         return "VACUUM", 0.85, ["l5_depth", "void", "imbal"]
     
-    if f.get('exhaustion_flag', False) or (cvd_slope * delta < 0 and abs(cvd_slope) > 20):
+    if wick_features.get('exhaustion_flag', False) or (cvd_slope * delta < 0 and abs(cvd_slope) > 20):
         return "EXHAUSTION", 0.75, ["cvd_slope", "delta", "exhaust"]
     
     if rej_vel > 0.2 and void:
@@ -432,7 +437,7 @@ def render_ticker_card(symbol: str, wicks: List[WickData], ob_cache: Dict):
         return
     
     w = symbol_wicks[-1]
-    f = w.features
+    wick_features = w.features
     
     # Analyze live orderbook if available
     if symbol in ob_cache:
@@ -459,8 +464,8 @@ def render_ticker_card(symbol: str, wicks: List[WickData], ob_cache: Dict):
     wb_str = f"{w.wb_ratio:.1f}" if w.wb_ratio < 100 else "999"
     doji_flag = f" {PURPLE}DOJI{RESET}" if w.is_doji else ""
     
-    vwap_score = f.get('vwap_mean_reversion_score', 0)
-    vwap_dist = f.get('session_vwap_distance', 0) * 100
+    vwap_score = wick_features.get('vwap_mean_reversion_score', 0)
+    vwap_dist = wick_features.get('session_vwap_distance', 0) * 100
     vwap_color = RED if vwap_score >= 70 else YELLOW if vwap_score >= 40 else GREEN
     
     # Card render
@@ -536,7 +541,7 @@ def render_attention_feed(wicks: List[WickData], selected_idx: int = -1):
 
 
 def render_drilldown(w: WickData):
-    f = w.features
+    wick_features = w.features
     color = SYMBOL_COLORS.get(w.symbol, WHITE)
     
     print(f"\n{color}{'═'*80}{RESET}")
@@ -551,10 +556,10 @@ def render_drilldown(w: WickData):
     print(f"\n  {UNDERLINE}SCORE DRIVERS{RESET}")
     drivers = []
     if w.wb_ratio >= 2: drivers.append(("W:B≥2", "+15"))
-    if f.get('vwap_mean_reversion_score', 0) >= 70: drivers.append(("VWAP Ext", "+20"))
-    if f.get('liquidity_void_flag'): drivers.append(("Void", "+10"))
-    if f.get('stacked_imbalance_nearby'): drivers.append(("Stacked", "+10"))
-    if f.get('rejection_velocity', 0) > 0.1: drivers.append(("High Rej", "+15"))
+    if wick_features.get('vwap_mean_reversion_score', 0) >= 70: drivers.append(("VWAP Ext", "+20"))
+    if wick_features.get('liquidity_void_flag'): drivers.append(("Void", "+10"))
+    if wick_features.get('stacked_imbalance_nearby'): drivers.append(("Stacked", "+10"))
+    if wick_features.get('rejection_velocity', 0) > 0.1: drivers.append(("High Rej", "+15"))
     for name, pts in drivers[:4]:
         print(f"    {GREEN}•{RESET} {name}: {pts}")
     
@@ -587,22 +592,22 @@ def render_drilldown(w: WickData):
     
     # Feature clusters
     print(f"\n  {UNDERLINE}GEOMETRY{RESET}")
-    print(f"    W:B:{w.wb_ratio:.2f} | RejVel:{f.get('rejection_velocity', 0):.4f} | Body:{f.get('body_size_pct', 0):.2f}")
+    print(f"    W:B:{w.wb_ratio:.2f} | RejVel:{wick_features.get('rejection_velocity', 0):.4f} | Body:{wick_features.get('body_size_pct', 0):.2f}")
     
     print(f"\n  {UNDERLINE}ORDERFLOW{RESET}")
-    delta = f.get('delta_at_wick', 0)
+    delta = wick_features.get('delta_at_wick', 0)
     delta_color = GREEN if delta > 0 else RED if delta < 0 else WHITE
-    print(f"    Delta:{delta_color}{delta:+.1f}{RESET} | CVD:{f.get('cvd_slope_10', 0):.2f} | Absorb:{f.get('absorption_flag', False)} | Exhaust:{f.get('exhaustion_flag', False)}")
+    print(f"    Delta:{delta_color}{delta:+.1f}{RESET} | CVD:{wick_features.get('cvd_slope_10', 0):.2f} | Absorb:{wick_features.get('absorption_flag', False)} | Exhaust:{wick_features.get('exhaustion_flag', False)}")
     
     print(f"\n  {UNDERLINE}LIQUIDITY{RESET}")
-    l5_total = f.get('l5_depth_bid', 0) + f.get('l5_depth_ask', 0)
-    print(f"    L5:{l5_total:.2f} | Imbal:{f.get('depth_imbalance', 0):+.2f} | Void:{f.get('liquidity_void_flag', False)} | Stack:{f.get('stacked_imbalance_nearby', False)}")
+    l5_total = wick_features.get('l5_depth_bid', 0) + wick_features.get('l5_depth_ask', 0)
+    print(f"    L5:{l5_total:.2f} | Imbal:{wick_features.get('depth_imbalance', 0):+.2f} | Void:{wick_features.get('liquidity_void_flag', False)} | Stack:{wick_features.get('stacked_imbalance_nearby', False)}")
     
     print(f"\n  {UNDERLINE}DERIVS{RESET}")
-    print(f"    OI:{f.get('oi_change_pct', 0)*100:+.3f}% | Fund:{f.get('funding_rate_now', 0)*100:.4f}% | LiqDens:{f.get('liquidation_density', 0):.2f}")
+    print(f"    OI:{wick_features.get('oi_change_pct', 0)*100:+.3f}% | Fund:{wick_features.get('funding_rate_now', 0)*100:.4f}% | LiqDens:{wick_features.get('liquidation_density', 0):.2f}")
     
     print(f"\n  {UNDERLINE}SESSION{RESET}")
-    print(f"    {f.get('session_label', 'N/A').upper()} | VWAPdist:{f.get('session_vwap_distance', 0)*100:+.3f}% | VWAPscore:{f.get('vwap_mean_reversion_score', 0):.0f} | MinsIn:{f.get('minutes_into_session', 0)}")
+    print(f"    {wick_features.get('session_label', 'N/A').upper()} | VWAPdist:{wick_features.get('session_vwap_distance', 0)*100:+.3f}% | VWAPscore:{wick_features.get('vwap_mean_reversion_score', 0):.0f} | MinsIn:{wick_features.get('minutes_into_session', 0)}")
     
     if w.market_state:
         print(f"\n  {UNDERLINE}MARKET STATE{RESET}")

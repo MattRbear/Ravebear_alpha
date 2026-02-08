@@ -137,10 +137,10 @@ def display():
         
         # ==================== GROUP WICKS BY SYMBOL ====================
         by_symbol = {"BTC-USDT": [], "ETH-USDT": [], "SOL-USDT": []}
-        for w in wicks:
-            sym = w.get('symbol', 'UNKNOWN')
+        for wick_event in wicks:
+            sym = wick_event.get('symbol', 'UNKNOWN')
             if sym in by_symbol:
-                by_symbol[sym].append(w)
+                by_symbol[sym].append(wick_event)
         
         # ==================== SYMBOL PANELS (Side by Side Style) ====================
         print(f"\n{WHITE}{'─'*100}{RESET}")
@@ -156,25 +156,25 @@ def display():
                 continue
             
             latest = symbol_wicks[-1]
-            f = latest.get('features', {})
+            latest_features = latest.get('features', {})
             
             # Extract key data
             side = format_side(latest.get('wick_side', '?'))
             wick_high = latest.get('wick_high', 0)
             wick_low = latest.get('wick_low', 0)
             
-            wick_ratio = f.get('wick_to_body_ratio', 0)
-            rejection_vel = f.get('rejection_velocity', 0)
-            delta = f.get('delta_at_wick', 0)
-            cvd_slope = f.get('cvd_slope_10', 0)
-            depth_imbal = f.get('depth_imbalance', 0)
-            oi_change = f.get('oi_change_pct', 0) * 100
-            funding = f.get('funding_rate_now', 0) * 100
-            vwap_dist = f.get('session_vwap_distance', 0) * 100
-            vwap_score = f.get('vwap_mean_reversion_score', 0)
-            session = f.get('session_label', 'none')
-            liq_void = f.get('liquidity_void_flag', False)
-            stacked = f.get('stacked_imbalance_nearby', False)
+            wick_ratio = latest_features.get('wick_to_body_ratio', 0)
+            rejection_vel = latest_features.get('rejection_velocity', 0)
+            delta = latest_features.get('delta_at_wick', 0)
+            cvd_slope = latest_features.get('cvd_slope_10', 0)
+            depth_imbal = latest_features.get('depth_imbalance', 0)
+            oi_change = latest_features.get('oi_change_pct', 0) * 100
+            funding = latest_features.get('funding_rate_now', 0) * 100
+            vwap_dist = latest_features.get('session_vwap_distance', 0) * 100
+            vwap_score = latest_features.get('vwap_mean_reversion_score', 0)
+            session = latest_features.get('session_label', 'none')
+            liq_void = latest_features.get('liquidity_void_flag', False)
+            stacked = latest_features.get('stacked_imbalance_nearby', False)
             
             # Timestamp
             ts = latest.get('ts', '')
@@ -221,24 +221,24 @@ def display():
         print(f"  {GRAY}{'TIME':<10} {'SYMBOL':<12} {'SIDE':<6} {'PRICE':<12} {'W:B':<8} {'DELTA':<10} {'OI%':<10} {'VWAP':<8}{RESET}")
         print(f"  {GRAY}{'─'*80}{RESET}")
         
-        for w in wicks[-20:]:
-            f = w.get('features', {})
-            sym = w.get('symbol', '?')
+        for wick_event in wicks[-20:]:
+            wick_features = wick_event.get('features', {})
+            sym = wick_event.get('symbol', '?')
             color = get_color(sym)
             
-            ts = w.get('ts', '')
+            ts = wick_event.get('ts', '')
             try:
                 t_obj = datetime.fromisoformat(ts.replace('Z', '+00:00'))
                 time_str = t_obj.strftime("%H:%M:%S")
             except:
                 time_str = "?"
             
-            side = "UP" if w.get('wick_side') == 'upper' else "DN"
-            price = w.get('wick_high', 0) if side == "UP" else w.get('wick_low', 0)
-            wb_ratio = f.get('wick_to_body_ratio', 0)
-            delta = f.get('delta_at_wick', 0)
-            oi_pct = f.get('oi_change_pct', 0) * 100
-            vwap_s = f.get('vwap_mean_reversion_score', 0)
+            side = "UP" if wick_event.get('wick_side') == 'upper' else "DN"
+            price = wick_event.get('wick_high', 0) if side == "UP" else wick_event.get('wick_low', 0)
+            wb_ratio = wick_features.get('wick_to_body_ratio', 0)
+            delta = wick_features.get('delta_at_wick', 0)
+            oi_pct = wick_features.get('oi_change_pct', 0) * 100
+            vwap_s = wick_features.get('vwap_mean_reversion_score', 0)
             
             # Format price
             if 'BTC' in sym:
@@ -262,16 +262,16 @@ def display():
         print(f"{WHITE}{'─'*100}{RESET}")
         
         if high_ratio_wicks:
-            for w in high_ratio_wicks[-8:]:
-                f = w.get('features', {})
-                sym = w.get('symbol', '?')
+            for wick_event in high_ratio_wicks[-8:]:
+                wick_features = wick_event.get('features', {})
+                sym = wick_event.get('symbol', '?')
                 color = get_color(sym)
                 
-                side = "UP" if w.get('wick_side') == 'upper' else "DN"
-                price = w.get('wick_high', 0) if side == "UP" else w.get('wick_low', 0)
-                wb_ratio = f.get('wick_to_body_ratio', 0)
-                liq_void = f.get('liquidity_void_flag', False)
-                stacked = f.get('stacked_imbalance_nearby', False)
+                side = "UP" if wick_event.get('wick_side') == 'upper' else "DN"
+                price = wick_event.get('wick_high', 0) if side == "UP" else wick_event.get('wick_low', 0)
+                wb_ratio = wick_features.get('wick_to_body_ratio', 0)
+                liq_void = wick_features.get('liquidity_void_flag', False)
+                stacked = wick_features.get('stacked_imbalance_nearby', False)
                 
                 # Format price
                 if 'BTC' in sym:
