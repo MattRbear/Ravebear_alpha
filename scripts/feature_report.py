@@ -31,16 +31,16 @@ def load_schema(schema_path: Path) -> Dict[str, Dict[str, str]]:
 def iter_jsonl_paths(inputs: List[str]) -> List[Path]:
     paths: List[Path] = []
     for item in inputs:
-        p = Path(item)
+        input_path = Path(item)
         # glob pattern
         if any(ch in item for ch in "*?[]"):
             for g in Path().glob(item):
                 if g.is_file():
                     paths.append(g)
-        elif p.is_dir():
-            paths.extend(sorted(p.glob("*.jsonl")))
-        elif p.is_file():
-            paths.append(p)
+        elif input_path.is_dir():
+            paths.extend(sorted(input_path.glob("*.jsonl")))
+        elif input_path.is_file():
+            paths.append(input_path)
         else:
             print(f"Warning: {item} not found.")
     return paths
@@ -63,34 +63,34 @@ def init_stats(features_meta: Dict[str, Dict[str, str]]) -> Dict[str, Dict[str, 
         }
     return stats
 
-def update_numeric_stat(st: Dict[str, Any], value: Any) -> None:
+def update_numeric_stat(feature_stat: Dict[str, Any], value: Any) -> None:
     try:
-        v = float(value)
+        numeric_value = float(value)
     except (TypeError, ValueError):
         return
-    if st["first_value"] is None:
-        st["first_value"] = v
-    elif v != st["first_value"]:
-        st["constant"] = False
-    if v != 0.0:
-        st["non_zero"] += 1
-    if st["min"] is None or v < st["min"]:
-        st["min"] = v
-    if st["max"] is None or v > st["max"]:
-        st["max"] = v
+    if feature_stat["first_value"] is None:
+        feature_stat["first_value"] = numeric_value
+    elif numeric_value != feature_stat["first_value"]:
+        feature_stat["constant"] = False
+    if numeric_value != 0.0:
+        feature_stat["non_zero"] += 1
+    if feature_stat["min"] is None or numeric_value < feature_stat["min"]:
+        feature_stat["min"] = numeric_value
+    if feature_stat["max"] is None or numeric_value > feature_stat["max"]:
+        feature_stat["max"] = numeric_value
 
-def update_bool_or_str_stat(st: Dict[str, Any], value: Any) -> None:
+def update_bool_or_str_stat(feature_stat: Dict[str, Any], value: Any) -> None:
     if value is None:
         return
-    v = bool(value) if st["type"] == "bool" else str(value)
-    if st["first_value"] is None:
-        st["first_value"] = v
-    elif v != st["first_value"]:
-        st["constant"] = False
-    if st["type"] == "bool" and v:
-        st["non_zero"] += 1
-    if st["distinct"] is not None and len(st["distinct"]) < 10:
-        st["distinct"].add(v)
+    normalized_value = bool(value) if feature_stat["type"] == "bool" else str(value)
+    if feature_stat["first_value"] is None:
+        feature_stat["first_value"] = normalized_value
+    elif normalized_value != feature_stat["first_value"]:
+        feature_stat["constant"] = False
+    if feature_stat["type"] == "bool" and normalized_value:
+        feature_stat["non_zero"] += 1
+    if feature_stat["distinct"] is not None and len(feature_stat["distinct"]) < 10:
+        feature_stat["distinct"].add(normalized_value)
 
 def analyze_files(paths: List[Path], features_meta: Dict[str, Dict[str, str]]) -> Dict[str, Dict[str, Any]]:
     stats = init_stats(features_meta)
@@ -111,52 +111,52 @@ def analyze_files(paths: List[Path], features_meta: Dict[str, Dict[str, str]]) -
                 total_events += 1
 
                 for name, meta in features_meta.items():
-                    st = stats[name]
+                    feature_stat = stats[name]
                     if name not in feats:
                         continue
                     value = feats[name]
-                    st["present"] += 1
+                    feature_stat["present"] += 1
                     if value is None:
                         continue
-                    st["non_null"] += 1
+                    feature_stat["non_null"] += 1
                     if meta["type"] in ("float", "int"):
-                        update_numeric_stat(st, value)
+                        update_numeric_stat(feature_stat, value)
                     elif meta["type"] in ("bool", "string"):
-                        update_bool_or_str_stat(st, value)
+                        update_bool_or_str_stat(feature_stat, value)
 
-    for st in stats.values():
-        st["total_events"] = total_events
+    for feature_stat in stats.values():
+        feature_stat["total_events"] = total_events
     return stats
 
 def print_report(stats: Dict[str, Dict[str, Any]]) -> None:
     features_sorted = sorted(stats.items(), key=lambda kv: (kv[1]["section"], kv[0]))
     current_section = None
 
-    for name, st in features_sorted:
-        if st["total_events"] == 0:
+    for name, feature_stat in features_sorted:
+        if feature_stat["total_events"] == 0:
             continue
 
-        section = st["section"]
+        section = feature_stat["section"]
         if section != current_section:
             current_section = section
             print(f"\n=== {section.upper()} ===")
             print(f"{'feature':30} {'type':7} {'present':7} {'non_zero':9} {'varies':7} {'min':10} {'max':10} {'sample':15}")
 
-        present = st["present"]
-        non_zero = st["non_zero"]
-        varies = (not st["constant"]) and (present > 0)
-        ftype = st["type"]
+        present = feature_stat["present"]
+        non_zero = feature_stat["non_zero"]
+        varies = (not feature_stat["constant"]) and (present > 0)
+        ftype = feature_stat["type"]
 
-        min_v = f"{st['min']:.4g}" if isinstance(st["min"], (int, float)) and st["min"] is not None else "-"
-        max_v = f"{st['max']:.4g}" if isinstance(st["max"], (int, float)) and st["max"] is not None else "-"
+        min_v = f"{feature_stat['min']:.4g}" if isinstance(feature_stat["min"], (int, float)) and feature_stat["min"] is not None else "-"
+        max_v = f"{feature_stat['max']:.4g}" if isinstance(feature_stat["max"], (int, float)) and feature_stat["max"] is not None else "-"
 
         if ftype in ("bool", "string"):
-            if st["distinct"]:
-                sample = ",".join(map(str, sorted(st["distinct"])))[:15]
+            if feature_stat["distinct"]:
+                sample = ",".join(map(str, sorted(feature_stat["distinct"])))[:15]
             else:
-                sample = str(st["first_value"])
+                sample = str(feature_stat["first_value"])
         else:
-            sample = f"{st['first_value']:.4g}" if st["first_value"] is not None else "-"
+            sample = f"{feature_stat['first_value']:.4g}" if feature_stat["first_value"] is not None else "-"
 
         print(f"{name:30} {ftype:7} {present:7d} {non_zero:9d} {str(varies):7} {min_v:10} {max_v:10} {sample:15}")
 

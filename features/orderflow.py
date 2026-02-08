@@ -57,8 +57,8 @@ def compute_orderflow_features(candle: Candle, trades: List[Trade]) -> Dict:
     state = _get_state(symbol)
 
     # Compute delta (buy - sell volume)
-    buy_volume = sum(t.size for t in trades if t.side == "buy")
-    sell_volume = sum(t.size for t in trades if t.side == "sell")
+    buy_volume = sum(trade.size for trade in trades if trade.side == "buy")
+    sell_volume = sum(trade.size for trade in trades if trade.side == "sell")
     delta = buy_volume - sell_volume
 
     # Update CVD (cumulative volume delta)
@@ -148,8 +148,8 @@ def compute_orderflow_features(candle: Candle, trades: List[Trade]) -> Dict:
     if len(trades) >= 5:
         # Group trades by price
         price_counts: Dict[float, int] = {}
-        for t in trades:
-            price_counts[t.price] = price_counts.get(t.price, 0) + 1
+        for trade in trades:
+            price_counts[trade.price] = price_counts.get(trade.price, 0) + 1
         # If any price has many trades, might be iceberg
         max_trades_at_price = max(price_counts.values()) if price_counts else 0
         if max_trades_at_price >= 5:

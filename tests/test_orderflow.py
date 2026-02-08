@@ -57,13 +57,13 @@ def test_cvd_slope_positive():
     # 5 iterations of +1 CVD each time
     trades = [Trade(datetime.now(timezone.utc), "BTC-USDT", 100.0, 1.0, "buy")]
     
-    res = {}
+    orderflow_result = {}
     for _ in range(5):
-        res = orderflow.compute_orderflow_features(c, trades)
+        orderflow_result = orderflow.compute_orderflow_features(c, trades)
         
     # CVD history: 1, 2, 3, 4, 5
     # Slope should be positive
-    assert res["cvd_slope_10"] > 0.0
+    assert orderflow_result["cvd_slope_10"] > 0.0
 
 
 def test_trade_frequency_spike():
@@ -78,10 +78,10 @@ def test_trade_frequency_spike():
         
     # High trade count
     high_trades = [Trade(datetime.now(timezone.utc), "BTC-USDT", 100.0, 1.0, "buy")] * 100
-    res = orderflow.compute_orderflow_features(c, high_trades)
+    orderflow_result = orderflow.compute_orderflow_features(c, high_trades)
     
     # Should be positive spike
-    assert res["trade_frequency_spike"] > 0.0
+    assert orderflow_result["trade_frequency_spike"] > 0.0
 
 
 def test_trade_frequency_spike_zero_history():
@@ -90,8 +90,8 @@ def test_trade_frequency_spike_zero_history():
     c = create_candle("BTC-USDT")
     trades = [Trade(datetime.now(timezone.utc), "BTC-USDT", 100.0, 1.0, "buy")]
     
-    res = orderflow.compute_orderflow_features(c, trades)
-    assert res["trade_frequency_spike"] == 0.0
+    orderflow_result = orderflow.compute_orderflow_features(c, trades)
+    assert orderflow_result["trade_frequency_spike"] == 0.0
 
 
 def test_symbol_isolation():

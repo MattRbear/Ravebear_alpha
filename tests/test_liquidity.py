@@ -19,12 +19,12 @@ def test_l1_l5_depths_spread():
     asks = [(102.0, 2.0), (103.0, 2.0)]
     bk = create_book(bids, asks)
     
-    res = liquidity.compute_liquidity_features(bk)
-    assert res["spread"] == 2.0 # 102 - 100
-    assert res["l1_depth_bid"] == 1.0
-    assert res["l1_depth_ask"] == 2.0
-    assert res["l5_depth_bid"] == 2.0
-    assert res["l5_depth_ask"] == 4.0
+    liquidity_result = liquidity.compute_liquidity_features(bk)
+    assert liquidity_result["spread"] == 2.0 # 102 - 100
+    assert liquidity_result["l1_depth_bid"] == 1.0
+    assert liquidity_result["l1_depth_ask"] == 2.0
+    assert liquidity_result["l5_depth_bid"] == 2.0
+    assert liquidity_result["l5_depth_ask"] == 4.0
 
 def test_depth_imbalance():
     # Symmetric
@@ -63,6 +63,6 @@ def test_stacked_imbalance():
     assert liquidity.compute_liquidity_features(bk2)["stacked_imbalance_nearby"] is False
 
 def test_no_orderbook():
-    res = liquidity.compute_liquidity_features(None)
-    assert res["spread"] == 0.0
-    assert res["liquidity_void_flag"] is False
+    liquidity_result = liquidity.compute_liquidity_features(None)
+    assert liquidity_result["spread"] == 0.0
+    assert liquidity_result["liquidity_void_flag"] is False
